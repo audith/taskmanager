@@ -5,13 +5,27 @@ from fastapi.security import OAuth2PasswordRequestForm
 from . import models, schemas, crud, auth
 from .database import engine
 from .dependencies import get_db, get_current_user
+from fastapi.middleware.cors import CORSMiddleware
+
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+origins=[
+    "http://localhost:5173"
+]
 
-# 👤 Register
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     existing = crud.get_user_by_email(db, user.email)
@@ -21,7 +35,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db, user.email, user.password)
 
 
-# 🔐 Login
+
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(),
           db: Session = Depends(get_db)):
@@ -37,7 +51,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(),
     return {"access_token": token, "token_type": "bearer"}
 
 
-# 📝 Create Task (USER + ADMIN)
+
 @app.post("/tasks", response_model=schemas.TaskResponse)
 def create_task(task: schemas.TaskCreate,
                 db: Session = Depends(get_db),
@@ -52,7 +66,7 @@ def create_task(task: schemas.TaskCreate,
     )
 
 
-# 📋 Get Tasks
+
 @app.get("/tasks", response_model=list[schemas.TaskResponse])
 def get_tasks(db: Session = Depends(get_db),
               user=Depends(get_current_user)):
@@ -60,7 +74,6 @@ def get_tasks(db: Session = Depends(get_db),
     return crud.get_tasks(db, user)
 
 
-# ❌ Delete Task
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: int,
                 db: Session = Depends(get_db),
