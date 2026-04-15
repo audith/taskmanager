@@ -12,8 +12,8 @@ def create_user(db:Session,email:str,password:str):
 def get_user_by_email(db:Session,email:str):
     return db.query(User).filter(User.email==email).first()
 
-def create_task(db:Session,user_id:int,title:str,description:str):
-    task=Task(title=title,description=description,owner_id=user_id)
+def create_task(db,user,title,description,owner_id=None):
+    task=Task(title=title,description=description,owner_id=owner_id if user.is_admin and owner_id else user.id )
     db.add(task)
     db.commit()
     db.refresh(task)
