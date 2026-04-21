@@ -25,30 +25,39 @@ app.add_middleware(
 )
 
 
-
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     existing = crud.get_user_by_email(db, user.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
 
-    return crud.create_user(db, user.email, user.password)
+    return crud.create_user(db, user.email, user.password) 
 
 
 
 @app.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(),
-          db: Session = Depends(get_db)):
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
 
+    # 1. Get user
     user = crud.get_user_by_email(db, form_data.username)
 
-    if not user or not auth.verify_password(
-        form_data.password, user.hashed_password
-    ):
+    # 2. Check user exists + password
+    if not user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
+    if not auth.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+    # 3. Create token
     token = auth.create_access_token({"user_id": user.id})
-    return {"access_token": token, "token_type": "bearer"}
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
 
 
 
@@ -68,10 +77,11 @@ def create_task(task: schemas.TaskCreate,
 
 
 @app.get("/tasks", response_model=list[schemas.TaskResponse])
-def get_tasks(db: Session = Depends(get_db),
-              user=Depends(get_current_user)):
-
-    return crud.get_tasks(db, user)
+def get_tasks(
+    db: Session = Depends(get_db),
+    user = Depends(get_current_user)
+):
+    return crud.get_tasks(db, user.id)
 
 
 @app.delete("/tasks/{task_id}")

@@ -2,13 +2,18 @@ from sqlalchemy.orm import Session
 from .models import User,Task
 from .auth import hash_password
 
-def create_user(db:Session,email:str,password:str):
-    user=User(email=email,hash_password=hash_password(password))
+def create_user(db: Session, email: str, password: str):
+    hashed_pw = hash_password(password)
+
+    user = User(
+        email=email,
+        hashed_password=hashed_pw   # ✅ correct field name
+    )
+
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
-
 def get_user_by_email(db:Session,email:str):
     return db.query(User).filter(User.email==email).first()
 
