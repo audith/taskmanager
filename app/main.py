@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models, schemas, crud, auth
@@ -23,8 +22,8 @@ app.add_middleware(
 # ---------- REGISTER ----------
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing = crud.get_user_by_email(db, user.email)
 
+    existing = crud.get_user_by_email(db, user.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
 
@@ -33,20 +32,17 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 # ---------- LOGIN ----------
 @app.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
 
-    user = crud.get_user_by_email(db, form_data.username)
+    db_user = crud.get_user_by_email(db, user.email)
 
-    if not user:
+    if not db_user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    if not auth.verify_password(form_data.password, user.hashed_password):
+    if not auth.verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    token = auth.create_access_token({"user_id": user.id})
+    token = auth.create_access_token({"user_id": db_user.id})
 
     return {
         "access_token": token,
