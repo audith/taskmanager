@@ -14,7 +14,13 @@ export default function Login() {
 
     if (data.access_token) {
       localStorage.setItem("token", data.access_token);
-      navigate("/dashboard");
+      localStorage.setItem("is_admin", data.is_admin);
+
+      if (data.is_admin) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } else {
       setError("Invalid credentials");
     }
@@ -32,9 +38,8 @@ export default function Login() {
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {/* 👇 ADD THIS */}
-        <p style={{ marginTop: "10px" }}>
-          Don't have an account? <Link to="/register">Register</Link>
+        <p>
+          Don't have account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>

@@ -18,7 +18,7 @@ export default function Register() {
       <div className="card">
         <h2>Register</h2>
 
-        <input onChange={(e) => setEmail(e.target.value)} />
+        <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
         <input type="password" onChange={(e) => setPassword(e.target.value)} />
 
         <button onClick={handleRegister}>Register</button>

@@ -36,6 +36,16 @@ export default function AdminPanel() {
 
         <button onClick={addTask}>Assign Task</button>
 
+        <button
+          style={{ background: "red", marginTop: "10px" }}
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = "/";
+          }}
+        >
+          Logout
+        </button>
+
         {tasks.map((t) => (
           <div className="task" key={t.id}>
             {t.title} (User {t.owner_id})

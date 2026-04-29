@@ -27,8 +27,22 @@ export default function Dashboard() {
       <div className="card">
         <h2>My Tasks</h2>
 
-        <input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+
         <button onClick={addTask}>Add Task</button>
+
+        <button
+          style={{ background: "red", marginTop: "10px" }}
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = "/";
+          }}
+        >
+          Logout
+        </button>
 
         {tasks.map((t) => (
           <div className="task" key={t.id}>
