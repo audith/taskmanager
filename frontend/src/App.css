@@ -28,15 +28,16 @@ button {
   width: 100%;
   padding: 10px;
   background: #4facfe;
-  color: white;
   border: none;
+  color: white;
   margin-top: 5px;
+  cursor: pointer;
 }
 
 .task {
   background: #eee;
-  padding: 8px;
   margin-top: 5px;
+  padding: 8px;
   display: flex;
   justify-content: space-between;
 }

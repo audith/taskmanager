@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { login } from "../api";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
@@ -14,15 +13,12 @@ export default function Login() {
 
     if (data.access_token) {
       localStorage.setItem("token", data.access_token);
-      localStorage.setItem("is_admin", data.is_admin);
+      localStorage.setItem("is_admin", data.is_admin || false);
 
-      if (data.is_admin) {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      if (data.is_admin) navigate("/admin");
+      else navigate("/dashboard");
     } else {
-      setError("Invalid credentials");
+      alert("Invalid login");
     }
   };
 
@@ -35,8 +31,6 @@ export default function Login() {
         <input type="password" onChange={(e) => setPassword(e.target.value)} />
 
         <button onClick={handleLogin}>Login</button>
-
-        {error && <p style={{ color: "red" }}>{error}</p>}
 
         <p>
           Don't have account? <Link to="/register">Register</Link>

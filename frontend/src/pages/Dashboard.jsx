@@ -17,7 +17,11 @@ export default function Dashboard() {
   }, []);
 
   const addTask = async () => {
-    await createTask(token, { title, description: "task" });
+    await createTask(token, {
+      title,
+      description: "user task",
+    });
+
     setTitle("");
     loadTasks();
   };
@@ -25,24 +29,10 @@ export default function Dashboard() {
   return (
     <div className="container">
       <div className="card">
-        <h2>My Tasks</h2>
+        <h2>User Dashboard</h2>
 
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
+        <input value={title} onChange={(e) => setTitle(e.target.value)} />
         <button onClick={addTask}>Add Task</button>
-
-        <button
-          style={{ background: "red", marginTop: "10px" }}
-          onClick={() => {
-            localStorage.clear();
-            window.location.href = "/";
-          }}
-        >
-          Logout
-        </button>
 
         {tasks.map((t) => (
           <div className="task" key={t.id}>
