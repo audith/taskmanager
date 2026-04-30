@@ -1,16 +1,13 @@
 from pydantic import BaseModel
+from typing import Optional
 
-
-# ---------- USER ----------
 class UserCreate(BaseModel):
     email: str
     password: str
 
-
 class UserLogin(BaseModel):
     email: str
     password: str
-
 
 class UserResponse(BaseModel):
     id: int
@@ -20,12 +17,10 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-# ---------- TASK ----------
 class TaskCreate(BaseModel):
     title: str
-    description: str
-
+    description: str = ""
+    owner_id: Optional[int] = None
 
 class TaskResponse(BaseModel):
     id: int
