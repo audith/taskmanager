@@ -1,48 +1,72 @@
 import { useState } from "react";
-import { login } from "../api";
 import { useNavigate, Link } from "react-router-dom";
+
+const API = "http://127.0.0.1:8000";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please enter both email and password");
+      return;
+    }
+    
+    setLoading(true);
+    setError("");
+    
     try {
-      setError("");
-      const data = await login(email, password);
-
-      if (!data.access_token) {
-        setError("Invalid credentials");
-        return;
+      const response = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || "Invalid credentials");
       }
-
-      localStorage.setItem("token", data.access_token);
-      const payload = JSON.parse(atob(data.access_token.split(".")[1]));
-
-      if (payload.is_admin) {
-        navigate("/admin");
+      
+      if (data.access_token) {
+        // Store token and user info
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("is_admin", data.user.is_admin);
+        localStorage.setItem("user_email", data.user.email);
+        
+        // Redirect based on role
+        if (data.user.is_admin) {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
       } else {
-        navigate("/dashboard");
+        throw new Error("Login failed");
       }
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
   };
 
   return (
     <div className="container">
       <div className="card">
-        <h2>Login</h2>
+        <h2>Login to Your Account</h2>
         
-        {error && <div className="error">{error}</div>}
+        {error && <div className="error">❌ {error}</div>}
 
         <input
-          placeholder="Email"
+          type="email"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+          disabled={loading}
         />
 
         <input
@@ -51,12 +75,17 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+          disabled={loading}
         />
 
-        <button onClick={handleLogin}>Login</button>
+        <button onClick={handleLogin} disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
 
         <div className="nav-links">
-          <Link to="/register">Don't have an account? Register</Link>
+          <p>
+            Don't have an account? <Link to="/register">Register here</Link>
+          </p>
         </div>
       </div>
     </div>

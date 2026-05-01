@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { register } from "../api";
 import { Link, useNavigate } from "react-router-dom";
+
+const API = "http://127.0.0.1:8000";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -8,68 +9,94 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async () => {
+    setError("");
+    setSuccess("");
+    
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      setError("");
-      setSuccess("");
+      const response = await fetch(`${API}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
       
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || "Registration failed");
       }
       
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters");
-        return;
-      }
+      setSuccess("Registration successful! Redirecting to login...");
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
       
-      const data = await register(email, password);
-      
-      if (data.id) {
-        setSuccess("Registration successful! Redirecting to login...");
-        setTimeout(() => navigate("/"), 2000);
-      } else {
-        setError("Registration failed");
-      }
     } catch (err) {
       setError(err.message);
+      setLoading(false);
     }
   };
 
   return (
     <div className="container">
       <div className="card">
-        <h2>Register</h2>
+        <h2>Create New Account</h2>
         
-        {error && <div className="error">{error}</div>}
-        {success && <div className="success">{success}</div>}
+        {error && <div className="error">❌ {error}</div>}
+        {success && <div className="success">✅ {success}</div>}
 
         <input
-          placeholder="Email"
+          type="email"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
         />
         
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Password (min 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
         />
         
         <input
           type="password"
-          placeholder="Confirm Password"
+          placeholder="Confirm password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={loading}
         />
 
-        <button onClick={handleRegister}>Register</button>
+        <button onClick={handleRegister} disabled={loading}>
+          {loading ? "Registering..." : "Register"}
+        </button>
 
         <div className="nav-links">
-          <Link to="/">Already have an account? Login</Link>
+          <p>
+            Already have an account? <Link to="/">Login here</Link>
+          </p>
         </div>
       </div>
     </div>

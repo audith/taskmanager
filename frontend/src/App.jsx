@@ -3,48 +3,88 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
+import { useState, useEffect } from "react";
 
 function App() {
-  const token = localStorage.getItem("token");
-  
-  // Function to check if token is valid
-  const isValidToken = () => {
-    if (!token) return false;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      // Check if token is expired
-      const exp = payload.exp * 1000;
-      return Date.now() < exp;
-    } catch {
-      return false;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem("token");
+    
+    console.log("Checking auth, token exists:", !!token);
+    
+    if (!token) {
+      setIsAuthenticated(false);
+      setIsAdmin(false);
+      setLoading(false);
+      return;
     }
+    
+    try {
+      // Decode token to check if it's valid
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const currentTime = Date.now() / 1000;
+      
+      if (payload.exp && payload.exp > currentTime) {
+        setIsAuthenticated(true);
+        setIsAdmin(payload.is_admin === true);
+        console.log("User is authenticated, isAdmin:", payload.is_admin);
+      } else {
+        // Token expired
+        localStorage.removeItem("token");
+        localStorage.removeItem("is_admin");
+        localStorage.removeItem("user_email");
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        console.log("Token expired");
+      }
+    } catch (error) {
+      console.error("Error checking auth:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("is_admin");
+      localStorage.removeItem("user_email");
+      setIsAuthenticated(false);
+      setIsAdmin(false);
+    }
+    
+    setLoading(false);
   };
 
-  const isAuthenticated = isValidToken();
-  
-  // Function to get user role from token
-  const getUserRole = () => {
-    if (!token) return null;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.is_admin ? "admin" : "user";
-    } catch {
-      return null;
-    }
-  };
-
-  const userRole = getUserRole();
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="card">
+          <h2>Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
-        <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
+        {/* Public routes - only accessible when NOT logged in */}
+        <Route 
+          path="/" 
+          element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} 
+        />
+        <Route 
+          path="/register" 
+          element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} 
+        />
+        
+        {/* Protected routes - only accessible when logged in */}
         <Route 
           path="/dashboard" 
           element={
             isAuthenticated ? (
-              userRole === "admin" ? <Navigate to="/admin" /> : <Dashboard />
+              !isAdmin ? <Dashboard /> : <Navigate to="/admin" />
             ) : (
               <Navigate to="/" />
             )
@@ -53,13 +93,12 @@ function App() {
         <Route 
           path="/admin" 
           element={
-            isAuthenticated && userRole === "admin" ? (
-              <AdminPanel />
-            ) : (
-              <Navigate to="/" />
-            )
+            isAuthenticated && isAdmin ? <AdminPanel /> : <Navigate to="/" />
           } 
         />
+        
+        {/* Catch all - redirect to login */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );
