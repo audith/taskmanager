@@ -118,13 +118,15 @@ Frontend runs on:
 ```text
 http://localhost:5173
 ```
+#create database
+CREATE DATABASE taskmanager;
 
 ## Environment Variables
 
 Create `.env` file:
 
 ```env
-DATABASE_URL=your_database_url
+DATABASE_URL=postgresql://taskuser:yourpassword@localhost:5432/taskmanager
 SECRET_KEY=your_secret_key
 ```
 
